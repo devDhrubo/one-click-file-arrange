@@ -1,0 +1,52 @@
+name: Build & Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild and .NET
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Compile Native FileOrganizer.exe
+        run: |
+          $csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          $wpf = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\WPF"
+          $refs = @(
+              "/r:System.dll",
+              "/r:System.Core.dll",
+              "/r:System.Drawing.dll",
+              "/r:System.Windows.Forms.dll",
+              "/r:$wpf\PresentationFramework.dll",
+              "/r:$wpf\PresentationCore.dll",
+              "/r:$wpf\WindowsBase.dll",
+              "/r:System.Xaml.dll",
+              "/r:System.Web.Extensions.dll"
+          )
+          & $csc /target:winexe "/out:FileOrganizer.exe" $refs "FileOrganizerApp.cs"
+
+      - name: Package Release ZIP
+        run: |
+          Compress-Archive -Path "FileOrganizer.exe", "File_Organizer.bat", "README.md", "LICENSE" -DestinationPath "FileOrganizer-Portable.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            FileOrganizer.exe
+            FileOrganizer-Portable.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

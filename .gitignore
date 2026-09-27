@@ -1,0 +1,14 @@
+# Windows temporary files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# History & Logs
+.organizer_history.json
+*.log
+
+# Build artifacts & temp
+bin/
+obj/
+*.tmp
+*.pdb
